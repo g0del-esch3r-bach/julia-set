@@ -59,7 +59,7 @@ def compute_hexi_set(x_min, x_max, y_min, y_max, width, height, max_iter, z0=1.0
 
 
 def plot_hexi_set(hexi_set, x_min, x_max, y_min, y_max, z0=1.0):
-    """Plot the set for f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹ with cursor coordinate display and point marking."""
+    """Plot the set for f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹ with point marking."""
     fig, ax = plt.subplots(figsize=(10, 8))
     im = ax.imshow(hexi_set, extent=[x_min, x_max, y_min, y_max], 
                    cmap='hot', interpolation='bilinear')
@@ -68,25 +68,12 @@ def plot_hexi_set(hexi_set, x_min, x_max, y_min, y_max, z0=1.0):
     ax.set_xlabel('Real axis (c)')
     ax.set_ylabel('Imaginary axis (c)')
     
-    # Add text for displaying coordinates
-    coord_text = ax.text(0.02, 0.98, '', transform=ax.transAxes, 
-                        verticalalignment='top', bbox=dict(boxstyle='round', 
-                        facecolor='white', alpha=0.8))
-    
     # Initialize blue dot (initially hidden)
     blue_dot, = ax.plot([], [], 'bo', markersize=8, markerfacecolor='blue', 
                         markeredgecolor='darkblue', markeredgewidth=2)
     
     # Storage for current coordinates
     current_coords = {'real': 0.0, 'imag': 0.0}
-    
-    def on_mouse_move(event):
-        if event.inaxes:
-            # Get mouse coordinates in data space
-            x, y = event.xdata, event.ydata
-            coord_text.set_text(f'c = {x:.6f} + {y:.6f}i')
-            coord_text.set_position((0.02, 0.98))
-            plt.draw()
     
     def submit_real(text):
         try:
@@ -104,9 +91,6 @@ def plot_hexi_set(hexi_set, x_min, x_max, y_min, y_max, z0=1.0):
         # Place the blue dot at the current coordinates
         blue_dot.set_data([current_coords['real']], [current_coords['imag']])
         plt.draw()
-    
-    # Connect the mouse motion event
-    fig.canvas.mpl_connect('motion_notify_event', on_mouse_move)
     
     # Create text boxes for real and imaginary parts
     ax_real = plt.axes([0.15, 0.02, 0.25, 0.04])
