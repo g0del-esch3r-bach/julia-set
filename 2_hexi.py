@@ -10,6 +10,7 @@ import cmath
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.widgets import TextBox, Button
 
 
 def hexi_iteration(c, max_iter, z0=1.0):
@@ -58,26 +59,80 @@ def compute_hexi_set(x_min, x_max, y_min, y_max, width, height, max_iter, z0=1.0
 
 
 def plot_hexi_set(hexi_set, x_min, x_max, y_min, y_max, z0=1.0):
-    """Plot the set for f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹."""
-    plt.figure(figsize=(10, 8))
-    plt.imshow(hexi_set, extent=[x_min, x_max, y_min, y_max], 
-               cmap='hot', interpolation='bilinear')
-    plt.colorbar(label='Iteration count')
-    plt.title(f'Set for f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹ (z₀ = {z0})')
-    plt.xlabel('Real axis (c)')
-    plt.ylabel('Imaginary axis (c)')
+    """Plot the set for f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹ with cursor coordinate display and point marking."""
+    fig, ax = plt.subplots(figsize=(10, 8))
+    im = ax.imshow(hexi_set, extent=[x_min, x_max, y_min, y_max], 
+                   cmap='hot', interpolation='bilinear')
+    plt.colorbar(im, label='Iteration count')
+    ax.set_title(f'Set for f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹ (z₀ = {z0})\nEnter coordinates and click "Pin Point"')
+    ax.set_xlabel('Real axis (c)')
+    ax.set_ylabel('Imaginary axis (c)')
+    
+    # Add text for displaying coordinates
+    coord_text = ax.text(0.02, 0.98, '', transform=ax.transAxes, 
+                        verticalalignment='top', bbox=dict(boxstyle='round', 
+                        facecolor='white', alpha=0.8))
+    
+    # Initialize blue dot (initially hidden)
+    blue_dot, = ax.plot([], [], 'bo', markersize=8, markerfacecolor='blue', 
+                        markeredgecolor='darkblue', markeredgewidth=2)
+    
+    # Storage for current coordinates
+    current_coords = {'real': 0.0, 'imag': 0.0}
+    
+    def on_mouse_move(event):
+        if event.inaxes:
+            # Get mouse coordinates in data space
+            x, y = event.xdata, event.ydata
+            coord_text.set_text(f'c = {x:.6f} + {y:.6f}i')
+            coord_text.set_position((0.02, 0.98))
+            plt.draw()
+    
+    def submit_real(text):
+        try:
+            current_coords['real'] = float(text)
+        except ValueError:
+            pass
+    
+    def submit_imag(text):
+        try:
+            current_coords['imag'] = float(text)
+        except ValueError:
+            pass
+    
+    def pin_point(event):
+        # Place the blue dot at the current coordinates
+        blue_dot.set_data([current_coords['real']], [current_coords['imag']])
+        plt.draw()
+    
+    # Connect the mouse motion event
+    fig.canvas.mpl_connect('motion_notify_event', on_mouse_move)
+    
+    # Create text boxes for real and imaginary parts
+    ax_real = plt.axes([0.15, 0.02, 0.25, 0.04])
+    ax_imag = plt.axes([0.45, 0.02, 0.25, 0.04])
+    ax_button = plt.axes([0.75, 0.02, 0.1, 0.04])
+    
+    text_box_real = TextBox(ax_real, 'Real:', initial='0.0')
+    text_box_imag = TextBox(ax_imag, 'Imag:', initial='0.0')
+    pin_button = Button(ax_button, 'Pin Point')
+    
+    text_box_real.on_submit(submit_real)
+    text_box_imag.on_submit(submit_imag)
+    pin_button.on_clicked(pin_point)
+    
     plt.show()
 
 
 def main():
     """Main function to compute and display the set for f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹."""
-    # Define the region to explore (may need adjustment based on behavior)
-    x_min, x_max = -2.0, 2.0
-    y_min, y_max = -2.0, 2.0
+    # Define the region to explore (zoomed in)
+    x_min, x_max = -0.67, 0.67
+    y_min, y_max = -0.67, 0.67
     
-    # Resolution and iteration parameters
-    width, height = 800, 600
-    max_iter = 100
+    # Higher resolution and more iterations for finer detail
+    width, height = 1200, 900
+    max_iter = 200
     
     # Use z₀ = 1 as the initial value
     z0 = 1.0
