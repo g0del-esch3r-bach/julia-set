@@ -70,12 +70,13 @@ def main():
     # Resolution and iteration parameters
     width, height = 800, 600
     max_iter = 100
-    z0 = 1.0  # Initial value for z
     
-    print(f"Computing set for f(z) = cz - c/z")
+    # Use z₀ = 1 + i as the initial value
+    z0 = complex(1, 1)
+    
+    print(f"Computing set for f(z) = cz - c/z with z₀ = {z0}")
     print(f"Region: [{x_min}, {x_max}] x [{y_min}, {y_max}]")
     print(f"Resolution: {width}x{height}, Max iterations: {max_iter}")
-    print(f"Initial value z₀ = {z0}")
     
     # Compute the set
     exp_set = compute_exp_set(x_min, x_max, y_min, y_max, 
