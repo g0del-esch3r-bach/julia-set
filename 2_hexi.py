@@ -111,8 +111,8 @@ def plot_hexi_set(hexi_set, x_min, x_max, y_min, y_max, z0=1.0):
 def main():
     """Main function to compute and display the set for f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹."""
     # Define the region to explore (zoomed in)
-    x_min, x_max = -0.67, 0.67
-    y_min, y_max = -0.67, 0.67
+    x_min, x_max = -0.7, 0.7
+    y_min, y_max = -0.7, 0.7
     
     # Higher resolution and more iterations for finer detail
     width, height = 1200, 900
