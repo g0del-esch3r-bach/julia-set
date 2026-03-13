@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Construct the set for f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹ via bare iteration.
+Construct the set for g_c(z) = z² + c/z² via bare iteration.
 
-This explores the behavior of the function f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹ where c is a parameter
-and we iterate starting from z = 1.
+This explores the behavior of the function g_c(z) = z² + c/z² where c is a parameter
+and we iterate starting from z = c^(1/4).
 """
 
 import cmath
@@ -13,37 +13,40 @@ import numpy as np
 from matplotlib.widgets import TextBox, Button
 
 
-def hexi_iteration(c, max_iter, z0=1.0):
+def D8_iteration(c, max_iter):
     """
-    Compute iterations of f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹ starting from z = z0.
+    Compute iterations of g_c(z) = z² + c/z² starting from z = c^(1/4).
     
     Returns the number of iterations before divergence or max_iter if not diverged.
     """
-    z = z0
+    # Starting point: z = c^(1/4)
+    # Handle c = 0 case
+    if abs(c) < 1e-10:
+        z = 0.0
+    else:
+        z = c ** 0.25  # Fourth root of c
+    
     for i in range(max_iter):
         if abs(z) > 10:  # Divergence threshold
             return i
         
-        # Compute c(z³ - 3z)
-        inner = c * (z**3 - 3*z)
-        
         # Handle division by zero
-        if abs(inner) < 1e-10:
+        if abs(z) < 1e-10:
             return i  # Treat as divergence
         
-        # Apply the function f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹
-        z = inner + 1/inner
+        # Apply the function g_c(z) = z² + c/z²
+        z = z**2 + c/(z**2)
     
     return max_iter
 
 
-def compute_hexi_set(x_min, x_max, y_min, y_max, width, height, max_iter, z0=1.0):
+def compute_D8_set(x_min, x_max, y_min, y_max, width, height, max_iter):
     """
-    Compute the set for f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹ for a given region of c values.
+    Compute the set for g_c(z) = z² + c/z² for a given region of c values.
     
     Returns a 2D array where each value represents the iteration count at that point.
     """
-    hexi_set = np.zeros((height, width))
+    D8_set = np.zeros((height, width))
     
     for py in range(height):
         for px in range(width):
@@ -53,18 +56,18 @@ def compute_hexi_set(x_min, x_max, y_min, y_max, width, height, max_iter, z0=1.0
             c = complex(x, y)
             
             # Compute iteration count for this c value
-            hexi_set[py, px] = hexi_iteration(c, max_iter, z0)
+            D8_set[py, px] = D8_iteration(c, max_iter)
     
-    return hexi_set
+    return D8_set
 
 
-def plot_hexi_set(hexi_set, x_min, x_max, y_min, y_max, z0=1.0):
-    """Plot the set for f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹ with point marking."""
+def plot_D8_set(D8_set, x_min, x_max, y_min, y_max):
+    """Plot the set for g_c(z) = z² + c/z² with point marking."""
     fig, ax = plt.subplots(figsize=(10, 8))
-    im = ax.imshow(hexi_set, extent=[x_min, x_max, y_min, y_max], 
+    im = ax.imshow(D8_set, extent=[x_min, x_max, y_min, y_max], 
                    cmap='hot', interpolation='bilinear')
     plt.colorbar(im, label='Iteration count')
-    ax.set_title(f'Set for f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹ (z₀ = {z0})\nEnter coordinates and click "Pin Point"')
+    ax.set_title(f'Set for g_c(z) = z² + c/z² (z₀ = c^(1/4))\nEnter coordinates and click "Pin Point"')
     ax.set_xlabel('Real axis (c)')
     ax.set_ylabel('Imaginary axis (c)')
     
@@ -109,7 +112,7 @@ def plot_hexi_set(hexi_set, x_min, x_max, y_min, y_max, z0=1.0):
 
 
 def main():
-    """Main function to compute and display the set for f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹."""
+    """Main function to compute and display the set for g_c(z) = z² + c/z²."""
     # Prompt user for dimension d
     while True:
         try:
@@ -130,20 +133,17 @@ def main():
     width, height = 1200, 900
     max_iter = 200
     
-    # Use z₀ = 1 as the initial value
-    z0 = 1.0
-    
-    print(f"Computing set for f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹")
+    print(f"Computing set for g_c(z) = z² + c/z²")
     print(f"Region: [{x_min}, {x_max}] x [{y_min}, {y_max}]")
     print(f"Resolution: {width}x{height}, Max iterations: {max_iter}")
-    print(f"Initial value z₀ = {z0}")
+    print(f"Starting point: z₀ = c^(1/4)")
     
     # Compute the set
-    hexi_set = compute_hexi_set(x_min, x_max, y_min, y_max, 
-                                width, height, max_iter, z0)
+    D8_set = compute_D8_set(x_min, x_max, y_min, y_max, 
+                            width, height, max_iter)
     
     # Plot the result
-    plot_hexi_set(hexi_set, x_min, x_max, y_min, y_max, z0)
+    plot_D8_set(D8_set, x_min, x_max, y_min, y_max)
 
 
 if __name__ == "__main__":
