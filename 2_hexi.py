@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
+
 """
+Code done by godel escher bach
+
 Construct the set for f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹ via bare iteration.
 
 This explores the behavior of the function f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹ where c is a parameter
