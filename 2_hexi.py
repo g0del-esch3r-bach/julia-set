@@ -9,8 +9,6 @@ This explores the behavior of the function f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻
 and we iterate starting from z = 1.
 """
 
-import cmath
-import sys
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.widgets import TextBox, Button
@@ -40,6 +38,17 @@ def hexi_iteration(c, max_iter, z0=1.0):
     return max_iter
 
 
+def normalize_to_square(x1, x2, y1, y2):
+    """Expand user's rectangle to the smallest containing square."""
+    xmid = 0.5 * (x1 + x2)
+    ymid = 0.5 * (y1 + y2)
+    span = max(x2 - x1, y2 - y1)
+    return (
+        xmid - span / 2,
+        xmid + span / 2,
+        ymid - span / 2,
+        ymid + span / 2,
+    )
 def compute_hexi_set(x_min, x_max, y_min, y_max, width, height, max_iter, z0=1.0):
     """
     Compute the set for f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹ for a given region of c values.
@@ -51,8 +60,8 @@ def compute_hexi_set(x_min, x_max, y_min, y_max, width, height, max_iter, z0=1.0
     for py in range(height):
         for px in range(width):
             # Convert pixel coordinates to complex plane coordinates for c
-            x = x_min + (x_max - x_min) * px / width
-            y = y_min + (y_max - y_min) * py / height
+            x = x_min + (x_max - x_min) * (px + 0.5) / width
+            y = y_max - (y_max - y_min) * (py + 0.5) / height  # Invert y-coordinate
             c = complex(x, y)
             
             # Compute iteration count for this c value
@@ -63,11 +72,24 @@ def compute_hexi_set(x_min, x_max, y_min, y_max, width, height, max_iter, z0=1.0
 
 def plot_hexi_set(hexi_set, x_min, x_max, y_min, y_max, z0=1.0):
     """Plot the set for f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹ with point marking."""
-    fig, ax = plt.subplots(figsize=(10, 8))
-    im = ax.imshow(hexi_set, extent=[x_min, x_max, y_min, y_max], 
-                   cmap='hot', interpolation='bilinear')
-    plt.colorbar(im, label='Iteration count')
-    ax.set_title(f'Set for f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹ (z₀ = {z0})\nEnter coordinates and click "Pin Point"')
+    fig, ax = plt.subplots(figsize=(10, 10))
+
+    im = ax.imshow(
+        hexi_set,
+        extent=[x_min, x_max, y_min, y_max],
+        origin='upper',
+        cmap='hot',
+        interpolation='nearest'
+    )
+
+    ax.set_aspect('equal')
+    ax.set_box_aspect(1)
+
+    fig.colorbar(im, ax=ax, label='Iteration count')
+    ax.set_title(
+        f'Set for f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹ (z₀ = {z0})\n'
+        'Enter coordinates and click "Pin Point"'
+    )
     ax.set_xlabel('Real axis (c)')
     ax.set_ylabel('Imaginary axis (c)')
     
@@ -113,24 +135,30 @@ def plot_hexi_set(hexi_set, x_min, x_max, y_min, y_max, z0=1.0):
 
 def main():
     """Main function to compute and display the set for f(z) = c(z³ - 3z) + (c(z³ - 3z))⁻¹."""
-    # Prompt user for dimension d
+    # Prompt user for window boundaries
     while True:
         try:
-            d_input = input("Enter the dimension d for region [-d,d]x[-d,d]: ")
-            d = float(d_input)
-            if d <= 0:
-                print("Please enter a positive number.")
+            x1_input = input("Enter x1 (left boundary): ")
+            x2_input = input("Enter x2 (right boundary): ")
+            y1_input = input("Enter y1 (bottom boundary): ")
+            y2_input = input("Enter y2 (top boundary): ")
+            
+            x1, x2 = float(x1_input), float(x2_input)
+            y1, y2 = float(y1_input), float(y2_input)
+            
+            if x1 >= x2 or y1 >= y2:
+                print("Invalid range. Ensure x1 < x2 and y1 < y2.")
                 continue
             break
         except ValueError:
-            print("Invalid input. Please enter a number.")
+            print("Invalid input. Please enter numbers.")
     
-    # Define the region to explore using user's dimension
-    x_min, x_max = -d, d
-    y_min, y_max = -d, d
+    # Use user's rectangle, but expand to a square viewing window
+    x_min, x_max, y_min, y_max = normalize_to_square(x1, x2, y1, y2)
     
-    # Higher resolution and more iterations for finer detail
-    width, height = 1200, 900
+    # Use square resolution
+    size = 900
+    width = height = size
     max_iter = 200
     
     # Use z₀ = 1 as the initial value
