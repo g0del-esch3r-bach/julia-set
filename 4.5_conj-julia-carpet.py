@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 """
-Julia set generator for f(z) = -((2 i z^3 (-1 + 3 z^2))/((-1 + z^2)^2 (-1 + 4 z^2)))
+Julia set generator for g(z) = -((2 z^3 (-1 + 3 z^2))/((-1 + z^2)^2 (-1 + 4 z^2)))
 
 This explores the behavior of the complex rational function 
-f(z) = -((2 i z^3 (-1 + 3 z^2))/((-1 + z^2)^2 (-1 + 4 z^2)))
+g(z) = -((2 z^3 (-1 + 3 z^2))/((-1 + z^2)^2 (-1 + 4 z^2)))
 and iterates starting from various z values.
 """
 
@@ -15,20 +15,25 @@ from matplotlib.widgets import TextBox, Button
 
 def julia_iteration(z, max_iter):
     """
-    Compute iterations of f(z) = -((2 i z^3 (-1 + 3 z^2))/((-1 + z^2)^2 (-1 + 4 z^2))) starting from z.
+    Compute iterations of g(z) = -((2 z^3 (-1 + 3 z^2))/((-1 + z^2)^2 (-1 + 4 z^2))) starting from z.
     
     Returns the number of iterations before divergence or max_iter if not diverged.
     """
     for i in range(max_iter):
-        if abs(z) > 10:  # Divergence threshold
+        if abs(z) > 50:  # Moderate divergence threshold
             return i
         
-        # Compute the rational function f(z) = -((2 i z^3 (-1 + 3 z^2))/((-1 + z^2)^2 (-1 + 4 z^2)))
-        numerator = -2j * z**3 * (-1 + 3*z**2)
-        denominator = (-1 + z**2)**2 * (-1 + 4*z**2)
+        # Check for poles early to avoid expensive computations
+        z_sq = z * z
+        if abs(z_sq - 1) < 1e-4 or abs(z_sq - 0.25) < 1e-4:  # Moderate pole detection
+            return i
+        
+        # Compute the rational function g(z) = -((2 z^3 (-1 + 3 z^2))/((-1 + z^2)^2 (-1 + 4 z^2)))
+        numerator = -2 * z**3 * (-1 + 3*z_sq)
+        denominator = (z_sq - 1)**2 * (z_sq - 0.25)
         
         # Handle division by zero (poles)
-        if abs(denominator) < 1e-10:
+        if abs(denominator) < 1e-8:
             return i  # Treat as divergence at pole
         
         # Apply the function
@@ -52,17 +57,26 @@ def normalize_to_square(x1, x2, y1, y2):
 
 def compute_julia_set(x_min, x_max, y_min, y_max, width, height, max_iter):
     """
-    Compute the Julia set for f(z) = -((2 i z^3 (-1 + 3 z^2))/((-1 + z^2)^2 (-1 + 4 z^2))) for a given region.
+    Compute the Julia set for g(z) = -((2 z^3 (-1 + 3 z^2))/((-1 + z^2)^2 (-1 + 4 z^2))) for a given region.
     
     Returns a 2D array where each value represents the iteration count at that point.
     """
     julia_set = np.zeros((height, width))
     
+    # Pre-compute coordinate transformations for efficiency
+    x_step = (x_max - x_min) / width
+    y_step = (y_max - y_min) / height
+    
     for py in range(height):
+        # Progress indicator
+        if py % 50 == 0:
+            print(f"Progress: {py}/{height} rows ({100*py/height:.1f}%)")
+            
+        y = y_max - (py + 0.5) * y_step  # Invert y-coordinate
+        
         for px in range(width):
             # Convert pixel coordinates to complex plane coordinates for z
-            x = x_min + (x_max - x_min) * (px + 0.5) / width
-            y = y_max - (y_max - y_min) * (py + 0.5) / height  # Invert y-coordinate
+            x = x_min + (px + 0.5) * x_step
             z = complex(x, y)
             
             # Compute iteration count for this z value
@@ -72,7 +86,7 @@ def compute_julia_set(x_min, x_max, y_min, y_max, width, height, max_iter):
 
 
 def plot_julia_set(julia_set, x_min, x_max, y_min, y_max):
-    """Plot the Julia set for f(z) = -((2 i z^3 (-1 + 3 z^2))/((-1 + z^2)^2 (-1 + 4 z^2))) with point marking."""
+    """Plot the Julia set for g(z) = -((2 z^3 (-1 + 3 z^2))/((-1 + z^2)^2 (-1 + 4 z^2))) with point marking."""
     fig, ax = plt.subplots(figsize=(10, 10))
 
     im = ax.imshow(
@@ -88,7 +102,7 @@ def plot_julia_set(julia_set, x_min, x_max, y_min, y_max):
 
     fig.colorbar(im, ax=ax, label='Iteration count')
     ax.set_title(
-        r'Julia set for f(z) = -((2 i z^3 (-1 + 3 z^2))/((-1 + z^2)^2 (-1 + 4 z^2)))' + '\n' +
+        r'Julia set for g(z) = -((2 z^3 (-1 + 3 z^2))/((-1 + z^2)^2 (-1 + 4 z^2)))' + '\n' +
         'Enter coordinates and click "Pin Point"'
     )
     ax.set_xlabel('Real axis (z)')
@@ -135,7 +149,7 @@ def plot_julia_set(julia_set, x_min, x_max, y_min, y_max):
 
 
 def main():
-    """Main function to compute and display the Julia set for f(z) = -((2 i z^3 (-1 + 3 z^2))/((-1 + z^2)^2 (-1 + 4 z^2)))."""
+    """Main function to compute and display the Julia set for g(z) = -((2 z^3 (-1 + 3 z^2))/((-1 + z^2)^2 (-1 + 4 z^2)))."""
     # Prompt user for window boundaries
     while True:
         try:
@@ -162,7 +176,7 @@ def main():
     width = height = size
     max_iter = 200
     
-    print(f"Computing Julia set for f(z) = -((2 i z^3 (-1 + 3 z^2))/((-1 + z^2)^2 (-1 + 4 z^2)))")
+    print(f"Computing Julia set for g(z) = -((2 z^3 (-1 + 3 z^2))/((-1 + z^2)^2 (-1 + 4 z^2)))")
     print(f"Region: [{x_min}, {x_max}] x [{y_min}, {y_max}]")
     print(f"Resolution: {width}x{height}, Max iterations: {max_iter}")
     
